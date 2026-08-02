@@ -79,7 +79,7 @@ git clone <this-repo>
 cd csv_qa_agent
 pip install pandas          # required, always
 pip install anthropic       # optional, only needed for LLM mode
-export ANTHROPIC_API_KEY=sk-ant-...   # optional, only needed for LLM mode
+export GROQ_API_KEY=gsk-...   # optional, only needed for LLM mode
 ```
 
 Works with **zero setup beyond pandas** — without a key it just runs in
