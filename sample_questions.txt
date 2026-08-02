@@ -1,0 +1,8 @@
+Which region had the highest total revenue in Q4 2025?
+Which region grew fastest from Q3 2025 to Q4 2025?
+What is the total revenue in 2025?
+Top 3 products by revenue
+What is the average revenue per region and quarter?
+Which quarter had the lowest total revenue?
+What is the growth rate for North between Q1 2025 and Q4 2025?
+Which region has the most consistent revenue across quarters?
