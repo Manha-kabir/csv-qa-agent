@@ -44,13 +44,12 @@ Q: Which region has the most consistent revenue across quarters?
   -> mode=llm_generated_code result=East
 ```
 
-Full output saved in `sample_outputs.json` (this version, generated in LLM
-mode — not the earlier fallback-only version).
+Full output saved in `sample_outputs.json` (generated in LLM mode with Groq).
 
 ### How to reproduce this yourself
 
 ```bash
-pip install pandas openai
+pip install -r requirements.txt
 export GROQ_API_KEY=your_key_here     # get a free key at console.groq.com
 python agent.py --csv data/sales_data.csv --questions-file sample_questions.txt --out sample_outputs.json
 ```
@@ -67,7 +66,7 @@ Two modes, chosen automatically based on whether an API key is present:
 
 | Mode | When it runs | How it works |
 |---|---|---|
-| **LLM code-gen** | `ANTHROPIC_API_KEY` env var is set | Claude is shown the DataFrame's schema + a few sample rows, and asked to write a short pandas snippet that stores the answer in a variable `result`. That snippet is executed in a restricted namespace (no `open`, `import`, `exec`, network, etc.) against the real data. The number you see came from pandas running on the actual CSV, not from the model recalling/estimating it. |
+| **LLM code-gen** | `GROQ_API_KEY` (or `ANTHROPIC_API_KEY`) is set | The LLM is shown the DataFrame's schema + a few sample rows, and asked to write a short pandas snippet that stores the answer in a variable `result`. That snippet is executed in a restricted namespace (no `open`, `import`, `exec`, network, etc.) against the real data. The number you see came from pandas running on the actual CSV, not from the model recalling/estimating it. |
 | **Rule-based fallback** | No key set, or the LLM call/generated code fails | `fallback_engine.py` matches the question against a fixed set of patterns (top-N, highest/lowest by group+period, growth between two periods, variability, etc.) and answers with plain pandas `groupby`/`sum`/`std` calls. No LLM involved at all. |
 
 Either way, the answer is a real computed value, and the response tells you which mode produced it.
@@ -75,11 +74,10 @@ Either way, the answer is a real computed value, and the response tells you whic
 ## Setup
 
 ```bash
-git clone <this-repo>
-cd csv_qa_agent
-pip install pandas          # required, always
-pip install anthropic       # optional, only needed for LLM mode
-export GROQ_API_KEY=gsk-...   # optional, only needed for LLM mode
+git clone https://github.com/Manha-kabir/csv-qa-agent
+cd csv-qa-agent
+pip install -r requirements.txt   # pandas (required) + openai (for Groq LLM mode)
+export GROQ_API_KEY=gsk-...       # optional, only needed for LLM mode
 ```
 
 Works with **zero setup beyond pandas** — without a key it just runs in
@@ -102,14 +100,20 @@ Interactive:
 python agent.py --csv data/sales_data.csv
 ```
 
+Tests (no API key needed):
+```bash
+python test_agent.py
+```
+
 ## Files
 
 - `agent.py` — CLI entry point, orchestrates LLM vs. fallback mode, executes generated code safely
-- `llm_client.py` — Anthropic API wrapper; builds the schema-aware prompt, strips code fences
+- `llm_client.py` — LLM wrapper (Groq first, Anthropic as backup); builds the schema-aware prompt, strips code fences
 - `fallback_engine.py` — deterministic pandas query engine (no LLM)
+- `test_agent.py` — 5 sanity tests against the fallback engine
 - `data/sales_data.csv` — sample dataset (4 regions × 4 quarters × 2–3 products, 2025)
 - `sample_questions.txt` — the 8 demo questions
-- `sample_outputs.json` — real output from running this repo's code against the sample data, in fallback mode (no key was used to generate this file — see Tradeoffs)
+- `sample_outputs.json` — real output from running this repo's code against the sample data in LLM mode (Groq)
 
 ## Sample questions covered
 
@@ -134,12 +138,11 @@ Full computed results for all 8: see `sample_outputs.json`.
   freely generated code, but I haven't stress-tested it against deliberately
   weird phrasing or larger/messier CSVs — that'd be the next thing to try.
 - **Code execution sandboxing is basic, not airtight.** I restrict `__builtins__`
-  to a safe subset and only expose `pd`/`df`, which stops accidental file
-  access or imports, but this is not a hardened sandbox (no subprocess
-  isolation, no resource limits). Fine for a take-home demo against a small
-  trusted CSV; not what I'd ship for untrusted user-supplied code in
-  production — I'd move code execution into a separate subprocess or
-  container with a timeout.
+  to a safe subset and only expose `pd`/`df`, which stops imports and `open()`,
+  but pandas methods themselves (e.g. `df.to_csv(...)`) can still touch the
+  filesystem, and there's no subprocess isolation or resource limits. Fine for
+  a take-home demo against a small trusted CSV; for production I'd move code
+  execution into a separate subprocess or container with a timeout.
 - **One retry, no self-correction loop.** If the LLM-generated snippet
   throws, I fall straight back to the rule engine rather than feeding the
   error back to the model for a second attempt. A production version should
