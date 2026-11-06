@@ -41,7 +41,7 @@ def generate_pandas_code(question: str, schema_description: str, model: str = "c
     return None, "No API key set (GROQ_API_KEY or ANTHROPIC_API_KEY)"
 
 
-def _generate_with_groq(question: str, schema_description: str, api_key: str, model: str = "llama-3.3-70b-versatile"):
+def _generate_with_groq(question: str, schema_description: str, api_key: str, model: str = "openai/gpt-oss-120b"):
     try:
         from openai import OpenAI  # groq uses the OpenAI-compatible SDK
     except ImportError:
@@ -51,7 +51,8 @@ def _generate_with_groq(question: str, schema_description: str, api_key: str, mo
         client = OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
         resp = client.chat.completions.create(
             model=model,
-            max_tokens=300,
+            max_tokens=1024,
+            reasoning_effort="low"
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": _build_user_prompt(question, schema_description)},
@@ -74,7 +75,8 @@ def _generate_with_anthropic(question: str, schema_description: str, api_key: st
         client = anthropic.Anthropic(api_key=api_key)
         msg = client.messages.create(
             model=model,
-            max_tokens=300,
+            max_tokens=1024,
+            reasoning_effort="low"
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": _build_user_prompt(question, schema_description)}],
         )
