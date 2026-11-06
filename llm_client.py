@@ -52,7 +52,7 @@ def _generate_with_groq(question: str, schema_description: str, api_key: str, mo
         resp = client.chat.completions.create(
             model=model,
             max_tokens=1024,
-            reasoning_effort="low"
+            reasoning_effort="low",
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": _build_user_prompt(question, schema_description)},
@@ -76,7 +76,7 @@ def _generate_with_anthropic(question: str, schema_description: str, api_key: st
         msg = client.messages.create(
             model=model,
             max_tokens=1024,
-            reasoning_effort="low"
+            reasoning_effort="low",
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": _build_user_prompt(question, schema_description)}],
         )
