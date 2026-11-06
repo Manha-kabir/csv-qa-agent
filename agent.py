@@ -7,7 +7,7 @@ the data (never by guessing a number from the model's memory).
 
 Two execution modes, chosen automatically:
 
-1. LLM mode (used if ANTHROPIC_API_KEY is set):
+1. LLM mode (used if ANTHROPIC_API_KEY/ GROQ_API_KEY is set):
    Claude is asked to write a short pandas snippet that computes the answer
    into a variable `result`. The snippet is executed in a restricted
    namespace (only `pd` and `df` available, no builtins like open/exec/import)
